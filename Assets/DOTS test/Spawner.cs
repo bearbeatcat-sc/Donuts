@@ -1,10 +1,13 @@
 using Unity.Entities;
 using Unity.Mathematics;
 
+/// <summary>
+/// ê∂ê¨ÉNÉâÉX
+/// </summary>
 public struct Spawner : IComponentData
 {
 	public Entity Prefab;
-	public float3 SpawnPosition;
-	public float NextSpawnTime;
-	public float SpawnInterval;
+	public float SpawnRadius;
+	public int SpawnCount;
+	public uint RandomSeed;
 }

@@ -8,19 +8,22 @@ public class SpawnerAuthoring : MonoBehaviour
 {
 	public GameObject prefab = null;
 	public float spwanRate = 0.0f;
+	public int spwanCount = 10;
+	public uint RandomSeed = 100;
 }
 
 public class SpawnerBaker : Baker<SpawnerAuthoring>
 {
 	public override void Bake(SpawnerAuthoring authoring)
 	{
-		var entity = GetEntity(TransformUsageFlags.None);
-		AddComponent(entity, new Spawner
+		var data = new Spawner()
 		{
 			Prefab = GetEntity(authoring.prefab, TransformUsageFlags.Dynamic),
-			SpawnPosition = authoring.transform.position,
-			NextSpawnTime = 0.0f,
-			SpawnInterval = authoring.spwanRate
-		});
+			SpawnRadius = authoring.spwanRate,
+			SpawnCount = authoring.spwanCount,
+			RandomSeed = authoring.RandomSeed
+		};
+
+		AddComponent(GetEntity(TransformUsageFlags.None), data);
 	}
 }

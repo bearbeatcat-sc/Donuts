@@ -1,33 +1,35 @@
 using Unity.Entities;
 using Unity.Transforms;
 using Unity.Burst;
+using Unity.Collections;
+using Unity.Mathematics;
 
-[BurstCompile]
 public partial struct SpawnerSystem : ISystem
 {
-	public void OnCreate(ref SystemState state) { }
+	public void OnCreate(ref SystemState state)
+		=> state.RequireForUpdate<Spawner>();
+
 	public void OnDestroy(ref SystemState state) { }
 
-	[BurstCompile]
 	public void OnUpdate(ref SystemState state)
 	{
-		foreach(RefRW<Spawner> spawner in SystemAPI.Query<RefRW<Spawner>>())
+		var config = SystemAPI.GetSingleton<Spawner>();
+
+		// Prefabのインスタンス化
+		var instances = state.EntityManager.Instantiate(
+			config.Prefab, config.SpawnCount, Allocator.Temp);
+
+		var rand = new Random(config.RandomSeed);
+
+		foreach (var entity in instances)
 		{
-			ProcessSpawner(ref state, spawner);
+			// 各コンポーネントへのアクセサを得る
+			var xform = SystemAPI.GetComponentRW<LocalTransform>(entity);
+
+			xform.ValueRW = LocalTransform.FromPositionRotation
+				(rand.NextFloat3() * config.SpawnRadius, rand.NextQuaternionRotation());
 		}
-	}
 
-	private void ProcessSpawner(ref SystemState state, RefRW<Spawner> spawner)
-	{
-		// スポーン時間の値を確認する
-		if (spawner.ValueRO.NextSpawnTime < SystemAPI.Time.ElapsedTime)
-		{
-			// スポナーの持つプレファブから、エンティティを生成する
-			Entity newEntity = state.EntityManager.Instantiate(spawner.ValueRO.Prefab);
-
-			state.EntityManager.SetComponentData(newEntity, LocalTransform.FromPosition(spawner.ValueRO.SpawnPosition));
-
-			spawner.ValueRW.NextSpawnTime = (float)SystemAPI.Time.ElapsedTime + spawner.ValueRO.SpawnInterval;
-		}
+		state.Enabled = false;
 	}
 }
